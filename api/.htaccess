@@ -1,0 +1,11 @@
+RewriteEngine on
+
+Options -Indexes
+
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# Remove the comment below if it is run in local
+RewriteRule ^(.*)$ /cribster/api/src/routing.php [NC,L,QSA]
+
+# Remove the comment below if it is run in hosting
+# RewriteRule ^(.*)$ /src/routing.php [NC,L,QSA]
