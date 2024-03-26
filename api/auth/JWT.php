@@ -1,30 +1,23 @@
 <?php
+namespace Auth;
+
 class JWT
 {
     private $headers;
 
     private $secret;
 
+    private $exp;
+
     public function __construct()
     {
         $this->headers = [
-            'alg' => 'HS256', // we are using a SHA256 algorithm
-            'typ' => 'JWT', // JWT type
-            'iss' => 'jwt.local', // token issuer
-            'aud' => 'example.com' // token audience
+            'alg' => 'HS256', // SHA256 as the algorithm
+            'typ' => 'JWT', // JSON Web Token as the type
+            'iss' => $_ENV['JWT_ISS'], // token issuer
+            'aud' => $_ENV['JWT_AUD'] // token audience
         ];
-        $this->secret = 'aimer'; // change this to your secret code
-    }
-
-    public function generate(array $payload): string
-    {
-        $headers = $this->encode(json_encode($this->headers)); // encode headers
-        $payload["exp"] = time() + 60; // add expiration to payload
-        $payload = $this->encode(json_encode($payload)); // encode payload
-        $signature = hash_hmac('SHA256', "$headers.$payload", $this->secret, true); // create SHA256 signature
-        $signature = $this->encode($signature); // encode signature
-
-        return "$headers.$payload.$signature";
+        $this->secret = $_ENV['JWT_SECRET'];
     }
 
     private function encode(string $str): string
@@ -32,22 +25,41 @@ class JWT
         return rtrim(strtr(base64_encode($str), '+/', '-_'), '='); // base64 encode string
     }
 
+    public function generate(array $payload): string
+    {
+        $headers = $this->encode(json_encode($this->headers)); // encode headers
+        $this->exp = time() + 60;
+        $payload['exp'] = $this->exp;
+        $payload = $this->encode(json_encode($payload)); // encode payload
+        $signature = hash_hmac('SHA256', "$headers.$payload", $this->secret, true); // create SHA256 signature
+        $signature = $this->encode($signature); // encode signature
+
+        return "$headers.$payload.$signature";
+    }
+
+    public function getExp() {
+        return date('c', $this->exp);
+        // return strtotime(date('c', $this->exp));
+    }
+
     public function is_valid(string $jwt): bool
     {
         $token = explode('.', $jwt); // explode token based on JWT breaks
+
         if (!isset ($token[1]) && !isset ($token[2])) {
-            return false; // fails if the header and payload is not set
+            return false; // fails if the payload and signature is not set
         }
-        $headers = base64_decode($token[0]); // decode header, create variable
-        $payload = base64_decode($token[1]); // decode payload, create variable
-        $clientSignature = $token[2]; // create variable for signature
+
+        $headers = base64_decode($token[0]); // decode the header
+        $payload = base64_decode($token[1]); // decode the payload
+        $clientSignature = $token[2]; // assign the signature
 
         if (!json_decode($payload)) {
             return false; // fails if payload does not decode
         }
 
         if ((json_decode($payload)->exp - time()) < 0) {
-            return false; // fails if expiration is greater than 0, setup for 1 minute
+            return false; // fails if expiration is greater than 0
         }
 
         if (isset (json_decode($payload)->iss)) {

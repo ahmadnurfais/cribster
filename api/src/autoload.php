@@ -13,7 +13,10 @@ spl_autoload_register(
         $class = str_replace('\\', DIRECTORY_SEPARATOR, $raw_class);
         $class_part = explode(DIRECTORY_SEPARATOR, $class);
 
-        $possible_paths[] = BASE_PATH . "/db/file.php";
+        foreach ($class_part as $namespace) {
+            $namespace = strtolower($namespace);
+            $possible_paths[] = BASE_PATH . "/$namespace/file.php";
+        }
 
         foreach ($possible_paths as $template_path) {
             $path = str_replace('file', end($class_part), $template_path);

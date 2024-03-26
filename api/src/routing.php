@@ -1,5 +1,6 @@
 <?php
 require_once './autoload.php';
+require_once './api.php';
 
 if ($_SERVER['SERVER_ADDR'] == '127.0.0.1' || $_SERVER['SERVER_ADDR'] == '::1') {
     $url = ($_SERVER['REQUEST_SCHEME'] == 'http') ? "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" : null;
@@ -19,7 +20,7 @@ if (strstr($page, 'pages') === substr($page, -5)) { // Check if it is the index 
 } else {
     $page = ($_SERVER['SERVER_ADDR'] == '127.0.0.1' || $_SERVER['SERVER_ADDR'] == '::1') ? "../../../$page.php" : "../$page.php";
 }
-echo $page;
+// echo $page;
 
 if (file_exists($page)) {
     include ($page);
